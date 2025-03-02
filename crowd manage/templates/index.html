@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crowd Monitoring Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        input {
+            padding: 8px;
+            width: 60px;
+            text-align: center;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #28a745;
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+    </style>
+    <script>
+        function toggleGuestVerification() {
+            fetch('/toggle_guest_verification', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('guest-status').innerText = data.guest_verification ? "ON" : "OFF";
+            });
+        }
+
+        function setPerimeter() {
+            let x1 = document.getElementById('x1').value;
+            let y1 = document.getElementById('y1').value;
+            let x2 = document.getElementById('x2').value;
+            let y2 = document.getElementById('y2').value;
+
+            fetch('/set_perimeter', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ x1: parseInt(x1), y1: parseInt(y1), x2: parseInt(x2), y2: parseInt(y2) })
+            })
+            .then(response => response.json())
+            .then(data => alert("✅ " + data.status));
+        }
+
+        function setCrowdLimit() {
+            let limit = document.getElementById("crowd-limit").value;
+            fetch('/set_crowd_limit', {
+                method: 'POST',  // Make sure this is POST
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: parseInt(limit) }) // Send JSON data
+            }).then(response => response.json())
+              .then(data => alert("Crowd limit updated to: " + data.new_limit))
+              .catch(error => console.error("Error:", error));
+        }
+
+        function updateCrowdCount() {
+            fetch('/get_crowd_count')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('crowd-count').innerText = data.count;
+            });
+        }
+
+        setInterval(updateCrowdCount, 3000); // Refresh crowd count every 3 seconds
+    </script>
+</head>
+<body>
+
+    <h1>🚀 Crowd Monitoring Dashboard</h1>
+
+    <div class="container">
+        
+        <div class="section">
+            <h2>📷 Live Stream</h2>
+            <a href="/stream" target="_blank">
+                <button><i class="fas fa-video"></i> View Live Stream</button>
+            </a>
+        </div>
+
+        <div class="section">
+            <h2>👥 Crowd Monitoring</h2>
+            <p>Current People Count: <b id="crowd-count">0</b></p>
+        </div>
+
+        <div class="section">
+            <h2>📍 Set Monitoring Perimeter</h2>
+            <p>Define the area where crowd monitoring should be active.
+                default setting is "((0,0),(640,480))"
+            </p>
+            <label>X1: <input type="number" id="x1"></label>
+            <label>Y1: <input type="number" id="y1"></label><br><br>
+            <label>X2: <input type="number" id="x2"></label>
+            <label>Y2: <input type="number" id="y2"></label><br><br>
+            <button onclick="setPerimeter()">✅ Update Perimeter</button>
+        </div>
+
+        <div class="section">
+            <h2>⚙️ Crowd Limit Settings</h2>
+            <input type="number" id="crowd-limit" placeholder="Enter max people" />
+            <button onclick="setCrowdLimit()">Set Limit</button>
+        </div>
+
+        <div class="section">
+            <h2>🔐 Guest Verification</h2>
+            <p>Status: <span id="guest-status" style="font-weight: bold;">OFF</span></p>
+            <label class="toggle-switch">
+                <input type="checkbox" onclick="toggleGuestVerification()">
+                <span class="slider"></span>
+            </label>
+            <button id="openGuestStream">Open Guest Stream</button>
+
+        </div>
+        <h2> upload image for guest verification </h2>
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" id="image-upload" name="image" accept="image/*" required>
+            <input type="text" id="person-name" name="name" placeholder="Enter Name" required>
+            <button type="submit">Upload & Save</button>
+        </form>
+        <p id="upload-status"></p>
+       
+        <div id="guest-status" style="font-size: 18px; font-weight: bold; margin-top: 10px;">Guest Status: Waiting...</div>
+
+    </div>
+    
+
+</body>
+</html>
+<p>Live People Count: <span id="liveCount">0</span></p>
+
+<script>
+    
+        document.getElementById("openGuestStream").addEventListener("click", function() {
+            window.open("/guest_verification_stream", "_blank");
+        });
+        function processFrame(frame) {
+            let formData = new FormData();
+            formData.append('frame', frame); // Send captured frame
+        
+            fetch('/verify_guest', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                let guestBox = document.getElementById('guest-status');
+                guestBox.innerText = data.message;
+        
+                // Change text color based on recognition result
+                if (data.status === "recognized") {
+                    guestBox.style.color = "green"; // Green for recognized guests
+                } else {
+                    guestBox.style.color = "red"; // Red for unknown guests
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+        
+        // Simulating frame capture from camera feed every 3 seconds
+        setInterval(function() {
+            let frame = captureCameraFrame(); // Replace with actual frame capture function
+            if (frame) {
+                processFrame(frame);
+            }
+        }, 3000); // Every 3 seconds
+       
+        
+ 
+    function updateLiveCount() {
+        fetch('/get_live_count')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("liveCount").textContent = data.people_count;  // Bottom counter
+            document.getElementById("crowd-count").textContent = data.people_count;  // Center counter
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    
+    // Update live count every second
+    setInterval(updateLiveCount, 1000);
+    document.getElementById("upload-form").onsubmit = async function(event) {
+        event.preventDefault();
+        let formData = new FormData(this);
+        
+        let response = await fetch("/upload_image", { method: "POST", body: formData });
+        let result = await response.json();
+        
+        document.getElementById("upload-status").innerText = result.message;
+    };
+</script>
