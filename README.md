@@ -14,7 +14,7 @@ Debugging Support – Added logging to track errors and system activity.
 🛠️ Installation & Setup
 1️⃣ Clone the Repository
 In powershell or command prompt
-git clone https://github.com/yourusername/Crowd-Monitoring-App.git
+git clone https://github.com/Noah7075/AI-powered-crowd-control-management-and-guest-verification.git
 cd Crowd-Monitoring-App
 
 2️⃣ Install Required Dependencies
